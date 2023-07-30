@@ -7,6 +7,7 @@ import (
 	"log"
 	"main/db"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -112,8 +113,24 @@ func DownloadFile(path string, url string) error {
 	return err
 }
 
-func DownloadRedditVideo(url string) (error, string) {
-	err, response := ReturnJson(fmt.Sprintf("%s.json", url))
+func ParseUri(uri string) (string, error) {
+	parsedUri, err := url.Parse(uri)
+
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("https://%s%s", parsedUri.Host, parsedUri.Path), nil
+}
+
+func DownloadRedditVideo(uri string) (error, string) {
+	parsedUri, err := ParseUri(uri) // Parse url
+	if err != nil {
+		return err, "" // If there is a error, return.
+	}
+
+	uri = parsedUri
+	err, response := ReturnJson(fmt.Sprintf("%s.json", uri))
 	if err != nil {
 		return err, ""
 	}
@@ -123,7 +140,7 @@ func DownloadRedditVideo(url string) (error, string) {
 		AudioUrl string
 	}{
 		DashUrl:  response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl,
-		AudioUrl: fmt.Sprintf("https://v.redd.it/%s/DASH_audio.mp4?source=fallback", strings.Split(response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl, "/")[3]),
+		AudioUrl: fmt.Sprintf("https://v.redd.it/%s/DASH_AUDIO_128.mp4", strings.Split(response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl, "/")[3]),
 	} // create a map to store the response body
 
 	dashPath := fmt.Sprintf("./tmp/v/%s.mp4", response[0].Data.Children[0].Data.Id)
@@ -141,7 +158,7 @@ func DownloadRedditVideo(url string) (error, string) {
 		return err, "" // return the error and an empty string
 	}
 	cmd := exec.Command("ffmpeg", "-i", dashPath, "-i", audioPath, "-c:v", "copy", "-c:a", "copy", outputPath) // create the command
-	if err := cmd.Run(); err != nil {                                                                          // run the command
+	if err := cmd.Run(); err != nil {
 		return err, "" // return the error and an empty string
 	}
 	time.Sleep(1 * time.Second) // wait for 1 second
@@ -160,7 +177,7 @@ func DownloadRedditVideo(url string) (error, string) {
 		db.Post.ID.Set(response[0].Data.Children[0].Data.Id),
 		db.Post.PostTitle.Set(response[0].Data.Children[0].Data.Title),
 		db.Post.Thumbnail.Set(strings.Replace(response[0].Data.Children[0].Data.Thumbnail, "amp;", "", -1)),
-		db.Post.PostURL.Set(url),
+		db.Post.PostURL.Set(uri),
 	).Exec(ctx) // create a new post
 	_ = created // ignore the created object
 

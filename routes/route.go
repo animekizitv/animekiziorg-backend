@@ -29,6 +29,7 @@ func DownloadVideo(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"status": false,
 			"path":   "not_found.html",
+			"err":    err.Error(),
 		})
 	}
 
@@ -65,7 +66,7 @@ func GetVideo(c echo.Context) error {
 	}
 
 	_, err := os.Stat(fmt.Sprintf("./tmp/%s.mp4", videoId))
-	if err != nil {
+	if err != nil || videoId == "undefined" {
 		return c.JSON(http.StatusOK, echo.Map{
 			"status":  false,
 			"message": "Video not found.",
