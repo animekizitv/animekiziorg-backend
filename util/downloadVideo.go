@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -100,6 +101,10 @@ func DownloadFile(path string, url string) error {
 		return err // return the error and an empty string
 	}
 
+	if resp.StatusCode == http.StatusForbidden {
+		return errors.New("403: Status Forbidden")
+	}
+
 	defer resp.Body.Close() // close the response body when the function returns
 
 	out, err := os.Create(path) // create the file
@@ -136,11 +141,13 @@ func DownloadRedditVideo(uri string) (error, string) {
 	}
 
 	videoInfo := struct {
-		DashUrl  string
-		AudioUrl string
+		DashUrl     string
+		AudioUrl    string
+		OldAudioUrl string
 	}{
-		DashUrl:  response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl,
-		AudioUrl: fmt.Sprintf("https://v.redd.it/%s/DASH_AUDIO_128.mp4", strings.Split(response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl, "/")[3]),
+		DashUrl:     response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl,
+		AudioUrl:    fmt.Sprintf("https://v.redd.it/%s/DASH_AUDIO_128.mp4", strings.Split(response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl, "/")[3]),
+		OldAudioUrl: fmt.Sprintf("https://v.redd.it/%s/DASH_audio.mp4", strings.Split(response[0].Data.Children[0].Data.Media.RedditVideo.FallbackUrl, "/")[3]),
 	} // create a map to store the response body
 
 	dashPath := fmt.Sprintf("./tmp/v/%s.mp4", response[0].Data.Children[0].Data.Id)
@@ -155,7 +162,9 @@ func DownloadRedditVideo(uri string) (error, string) {
 		return err, "" // return the error and an empty string
 	}
 	if err := DownloadFile(audioPath, videoInfo.AudioUrl); err != nil {
-		return err, "" // return the error and an empty string
+		if err := DownloadFile(audioPath, videoInfo.OldAudioUrl); err != nil {
+			return err, "" // return the error and an empty string
+		}
 	}
 	cmd := exec.Command("ffmpeg", "-i", dashPath, "-i", audioPath, "-c:v", "copy", "-c:a", "copy", outputPath) // create the command
 	if err := cmd.Run(); err != nil {
@@ -189,6 +198,16 @@ func DownloadRedditVideo(uri string) (error, string) {
 
 func RetrieveLatestVideos() (error, []db.PostModel) {
 	posts, err := database.Post.FindMany().Take(50).OrderBy(db.Post.Date.Order(db.DESC)).Exec(ctx) // find all posts
+	if err != nil {
+		return err, nil // return the error and an empty string
+	}
+	return nil, posts // return the error and the posts
+}
+
+func RetrieveVideosPage(page int) (error, []db.PostModel) {
+	/* 1 page is equals to 10 object. */
+
+	posts, err := database.Post.FindMany().Skip(10 * page).Take(10).OrderBy(db.Post.Date.Order(db.DESC)).Exec(ctx) // find all posts
 	if err != nil {
 		return err, nil // return the error and an empty string
 	}
