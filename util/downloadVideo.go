@@ -223,7 +223,7 @@ func DeleteNsfwPosts(posts []db.PostModel) []db.PostModel {
 	}
 
 	if len(tempArray) == 0 {
-		return posts
+		return []db.PostModel{}
 	}
 
 	return tempArray
