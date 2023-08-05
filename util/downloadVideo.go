@@ -196,18 +196,12 @@ func DownloadRedditVideo(uri string) (error, string) {
 	return nil, response[0].Data.Children[0].Data.Id
 }
 
-func RetrieveLatestVideos() (error, []db.PostModel) {
-	posts, err := database.Post.FindMany().Take(50).OrderBy(db.Post.Date.Order(db.DESC)).Exec(ctx) // find all posts
-	if err != nil {
-		return err, nil // return the error and an empty string
-	}
-	return nil, posts // return the error and the posts
-}
+const VIDEO_PER_PAGE = 50
 
-func RetrieveVideosPage(page int) (error, []db.PostModel) {
-	/* 1 page is equals to 10 object. */
+func RetrieveLatestVideos(page int) (error, []db.PostModel) {
+	skip := page * VIDEO_PER_PAGE
 
-	posts, err := database.Post.FindMany().Skip(10 * page).Take(10).OrderBy(db.Post.Date.Order(db.DESC)).Exec(ctx) // find all posts
+	posts, err := database.Post.FindMany().Skip(skip).Take(VIDEO_PER_PAGE).OrderBy(db.Post.Date.Order(db.DESC)).Exec(ctx) // find all posts
 	if err != nil {
 		return err, nil // return the error and an empty string
 	}

@@ -5,6 +5,7 @@ import (
 	"main/util"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/labstack/echo"
 )
@@ -17,7 +18,7 @@ func DownloadVideo(c echo.Context) error {
 	var downloadBody DownloadBody
 
 	if err := c.Bind(&downloadBody); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
+		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"status": false,
 			"path":   "not_found.html",
 		})
@@ -26,7 +27,7 @@ func DownloadVideo(c echo.Context) error {
 	err, path := util.DownloadRedditVideo(downloadBody.Url)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
+		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"status": false,
 			"path":   "not_found.html",
 			"err":    err.Error(),
@@ -35,7 +36,7 @@ func DownloadVideo(c echo.Context) error {
 
 	err, post := util.GetPost(path)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
+		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"status": false,
 			"path":   "not_found.html",
 		})
@@ -78,7 +79,13 @@ func GetVideo(c echo.Context) error {
 }
 
 func RetrieveLatestVideos(c echo.Context) error {
-	err, list := util.RetrieveLatestVideos()
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil {
+		page = 0
+	}
+
+	err, list := util.RetrieveLatestVideos(page)
+
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"status":  false,
