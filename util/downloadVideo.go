@@ -212,7 +212,7 @@ func RetrieveLatestVideos(page int) (error, []db.PostModel) {
 }
 
 func DeleteNsfwPosts(posts []db.PostModel) []db.PostModel {
-	var tempArray []db.PostModel
+	var tempArray []db.PostModel = []db.PostModel{}
 
 	for _, post := range posts {
 		a := strings.Contains(post.Thumbnail, "nsfw")
@@ -220,10 +220,6 @@ func DeleteNsfwPosts(posts []db.PostModel) []db.PostModel {
 		if !(a || b) {
 			tempArray = append(tempArray, post)
 		}
-	}
-
-	if len(tempArray) == 0 {
-		return []db.PostModel{}
 	}
 
 	return tempArray
