@@ -10,8 +10,12 @@
 # Test binary, built with `go test -c`
 *.test
 
-tmp/*.mp4
-main
+#Remove all .mp4 files in tmp
+tmp/**/*.mp4
+
+# Remove Output
+output/
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
