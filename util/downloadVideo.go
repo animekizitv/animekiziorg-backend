@@ -196,33 +196,33 @@ func DownloadRedditVideo(uri string) (error, string) {
 	return nil, response[0].Data.Children[0].Data.Id
 }
 
-const VIDEO_PER_PAGE = 50
+const VIDEO_PER_PAGE = 50 // how much videos will be shown in /retrieveLatest
 
 func RetrieveLatestVideos(page int) (error, []db.PostModel) {
-	skip := page * VIDEO_PER_PAGE
+	skip := page * VIDEO_PER_PAGE // skip video amount
 
 	posts, err := database.Post.FindMany().Skip(skip).Take(VIDEO_PER_PAGE).OrderBy(db.Post.Date.Order(db.DESC)).Exec(ctx) // find all posts
 	if err != nil {
 		return err, nil // return the error and an empty string
 	}
 
-	posts = DeleteNsfwPosts(posts)
+	posts = DeleteNsfwPosts(posts) // Delete the "nsfw" and "default" posts from array.
 
 	return nil, posts // return the error and the posts
 }
 
 func DeleteNsfwPosts(posts []db.PostModel) []db.PostModel {
-	var tempArray []db.PostModel = []db.PostModel{}
+	var tempArray []db.PostModel = []db.PostModel{} // Create an empty array
 
 	for _, post := range posts {
-		a := strings.Contains(post.Thumbnail, "nsfw")
-		b := strings.Contains(post.Thumbnail, "default")
+		a := strings.Contains(post.Thumbnail, "nsfw")    // Is post.thumbnail_url contains "nsfw"
+		b := strings.Contains(post.Thumbnail, "default") // Is post.thumbnail_url contains "default"
 		if !(a || b) {
-			tempArray = append(tempArray, post)
+			tempArray = append(tempArray, post) // then add it to temporary array.
 		}
 	}
 
-	return tempArray
+	return tempArray // return the tempArray
 }
 
 func RetrieveCount() (error, int) {
