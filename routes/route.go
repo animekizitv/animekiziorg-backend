@@ -78,6 +78,32 @@ func GetVideo(c echo.Context) error {
 	return c.Attachment(fmt.Sprintf("./tmp/%s.mp4", videoId), fmt.Sprintf("%s.mp4", videoId))
 }
 
+func DeleteEntry(c echo.Context) error {
+	videoId := c.QueryParam("videoId")
+	if videoId == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"status":  false,
+			"message": "You need to use 'videoId' param.",
+			"level":   "error",
+		})
+	}
+
+	err := util.DeletePost(videoId)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"status":  false,
+			"message": err.Error(),
+			"level":   "error",
+		})
+	}
+	return c.JSON(http.StatusInternalServerError, echo.Map{
+		"status":  true,
+		"message": "Successfully deleted the video.",
+		"level":   "error",
+	})
+}
+
 func RetrieveLatestVideos(c echo.Context) error {
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil {

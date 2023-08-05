@@ -205,7 +205,22 @@ func RetrieveLatestVideos(page int) (error, []db.PostModel) {
 	if err != nil {
 		return err, nil // return the error and an empty string
 	}
+
 	return nil, posts // return the error and the posts
+}
+
+func DeleteNsfwEntries(posts []db.PostModel) []db.PostModel {
+	returnPost := posts
+	for index, post := range posts {
+		if post.Thumbnail == "nsfw" {
+			returnPost = RemovePostIndex(returnPost, index)
+		}
+	}
+	return returnPost
+}
+
+func RemovePostIndex(s []db.PostModel, index int) []db.PostModel {
+	return append(s[:index], s[index+1:]...)
 }
 
 func RetrieveCount() (error, int) {
@@ -223,4 +238,14 @@ func GetPost(id string) (error, *db.PostModel) {
 	}
 
 	return nil, post
+}
+
+func DeletePost(id string) error {
+	post, err := database.Post.FindUnique(db.Post.ID.Equals(id)).Delete().Exec(ctx) // Get post data from database and delete from db.
+	if err != nil {
+		return err // return error if there is a error while getting data
+	}
+	_ = os.Remove(fmt.Sprintf("./tmp/%s.mp4", post.ID)) // Delete the file.
+
+	return nil
 }
