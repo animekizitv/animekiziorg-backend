@@ -9,6 +9,7 @@
 *.dylib
 # Test binary, built with `go test -c`
 *.test
+.env
 
 #Remove all .mp4 files in tmp
 tmp/**/*.mp4

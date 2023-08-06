@@ -2,16 +2,25 @@ package routes
 
 import (
 	"fmt"
+	"log"
 	"main/util"
 	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
 )
 
 type DownloadBody struct {
 	Url string `json:"videoUri"`
+}
+
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
 }
 
 func DownloadVideo(c echo.Context) error {
@@ -79,11 +88,21 @@ func GetVideo(c echo.Context) error {
 }
 
 func DeleteEntry(c echo.Context) error {
+	auth := c.QueryParam("auth")
 	videoId := c.QueryParam("videoId")
-	if videoId == "" {
+
+	if videoId == "" || auth == "" {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"status":  false,
-			"message": "You need to use 'videoId' param.",
+			"message": "You need to use \"videoId\" and \"auth\" query param.",
+			"level":   "error",
+		})
+	}
+
+	if auth != os.Getenv("PROD_AUTH") {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"status":  false,
+			"message": "Wrong auth key.",
 			"level":   "error",
 		})
 	}
@@ -97,7 +116,8 @@ func DeleteEntry(c echo.Context) error {
 			"level":   "error",
 		})
 	}
-	return c.JSON(http.StatusInternalServerError, echo.Map{
+
+	return c.JSON(http.StatusOK, echo.Map{
 		"status":  true,
 		"message": "Successfully deleted the video.",
 		"level":   "error",
