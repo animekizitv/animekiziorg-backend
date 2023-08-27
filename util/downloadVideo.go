@@ -128,14 +128,37 @@ func ParseUri(uri string) (string, error) {
 	return fmt.Sprintf("https://%s%s", parsedUri.Host, parsedUri.Path), nil
 }
 
+func GetVideoId(uri string) (string, error) {
+	parsedUri, err := url.Parse(uri)
+
+	if err != nil {
+		return "", err
+	}
+
+	split := strings.Split(parsedUri.Path, "/")
+
+	return split[len(split)-1], nil
+}
+
 func DownloadRedditVideo(uri string) (error, string) {
+
+	videoId, err := GetVideoId(uri) // get videoId from path
+	if err != nil {
+		return err, "" // check there is a error
+	}
+
+	file, err := os.Stat(fmt.Sprintf("./tmp/%s.mp4", videoId)) // check from video database if video exists
+	_ = file                                                   // we simply dont want the file variable
+	if err == nil {
+		return nil, videoId // return if there is no error
+	}
+
 	parsedUri, err := ParseUri(uri) // Parse url
 	if err != nil {
 		return err, "" // If there is a error, return.
 	}
 
-	uri = parsedUri
-	err, response := ReturnJson(fmt.Sprintf("%s.json", uri))
+	err, response := ReturnJson(fmt.Sprintf("%s.json", parsedUri))
 	if err != nil {
 		return err, ""
 	}

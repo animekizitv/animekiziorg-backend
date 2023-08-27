@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"log"
 	"main/db"
 )
 
@@ -9,7 +10,9 @@ var database = db.NewClient()
 var ctx = context.Background()
 
 func init() {
-	database.Connect()
+	if err := database.Connect(); err != nil {
+		log.Fatalf("error: %s", err.Error())
+	}
 }
 
 func ReturnDatabase() *db.PrismaClient {

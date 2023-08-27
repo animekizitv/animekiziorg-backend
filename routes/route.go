@@ -94,7 +94,7 @@ func DeleteEntry(c echo.Context) error {
 	if videoId == "" || auth == "" {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"status":  false,
-			"message": "You need to use 'videoId' and 'auth' query param.",
+			"message": "You need to use 'videoId' and 'auth' query param..",
 			"level":   "error",
 		})
 	}
