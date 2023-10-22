@@ -60,9 +60,32 @@ type List struct {
 	Data Data `json:"data,omitempty"`
 }
 
-func ReturnJson(url string) (error, []List) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil) // create a new GET request
+func ReturnJson(video_url string) (error, []List) {
+	proxyURL, err := url.Parse(os.Getenv("PROXY"))
+
+	// Check Errors
+	if err != nil {
+		return errors.New("A problem occured you have to dont know it."), nil
+	}
+
+	// Parse Reddit Url
+	redditUrl, err := url.Parse(video_url)
+
+	if err != nil {
+		return errors.New("Something gone wrong."), nil
+	}
+	fmt.Println(redditUrl.Host)
+
+	if redditUrl.Host != "www.reddit.com" && redditUrl.Host != "reddit.com" {
+		return errors.New("Host should be reddit.com or www.reddit.com"), nil
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+		},
+	}
+	req, err := http.NewRequest("GET", video_url, nil) // create a new GET request
 
 	if err != nil { // check for errors
 		return err, nil
